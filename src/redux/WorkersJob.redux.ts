@@ -1,30 +1,21 @@
-import {
-  combineReducers,
-  createAction,
-  createReducer,
-  Dispatch,
-  PayloadAction,
-} from "@reduxjs/toolkit";
-import { Login, PrintMessage } from "../Common/model";
+import { combineReducers, createAction, createReducer } from "@reduxjs/toolkit";
+import { Login, UserRegistration } from "../Common/model";
 import { AppDispatch } from "./store";
+import { Map } from "immutable";
+
 
 // Actions
-export const DisplayMessage = createAction<PrintMessage>("DisplayMessage");
-export const setIsLoading = createAction<boolean>("SetIsLoading");
-export const setUserName = createAction<string>("setUserName");
-export const setPassword = createAction<string>("setPassword");
+export const setIsLoading = createAction<boolean>("setIsLoading");
+export const setLogin = createAction<Login>("setLogin");
+export const setUserRegistration = createAction<UserRegistration>(
+  "setUserRegistration"
+);
+export const setLoginValidations = createAction<Map<string,string>>("setLoginValidations");
 
 // Reducers
-const messageReducer = createReducer(new PrintMessage(), (builder) => {
-  builder.addCase(DisplayMessage, (state, action) => {
-    state.message = action.payload.message;
-  });
-});
-
 const isLoadingReducer = createReducer(true, (builder) => {
   builder
     .addCase(setIsLoading, (state, action) => {
-      // Update the state directly
       return action.payload;
     })
     .addDefaultCase((state) => {
@@ -34,44 +25,36 @@ const isLoadingReducer = createReducer(true, (builder) => {
 
 const loginReducer = createReducer(new Login(), (builder) => {
   builder
-    .addCase(setUserName, (state, action) => {
-      return { ...state, userName: action.payload };
-    })
-    .addCase(setPassword, (state, action) => {
-      return { ...state, password: action.payload };
+    .addCase(setLogin, (state, action) => {
+      return action.payload;
     })
     .addDefaultCase((state) => {
       return state;
     });
 });
 
-const userNameErrorReducer = createReducer("", (builder) => {
+const loginValidationsReducer = createReducer(Map({UserName:"",Password:""}), (builder) => {
   builder
-    .addCase(setUserName, (state, action) => {
-      return action.payload?.trim().length === 0 || action.payload?.trim() === null
-        ? "User name is required"
-        : "";
+    .addCase(setLoginValidations, (state, action) => {
+      return action.payload;
     })
     .addDefaultCase((state) => {
       return state;
     });
 });
 
-const passwordErrorReducer = createReducer("", (builder) => {
-  builder
-    .addCase(setPassword, (state, action) => {
-      if (action.payload?.trim().length === 0 || action.payload?.trim() === null) {
-        return "Password is required.";
-      } else if (action.payload?.trim().length > 0 && action.payload?.trim().length < 8) {
-        return "Password length must be 8 characters.";
-      }
-
-      return "";
-    })
-    .addDefaultCase((state) => {
-      return state;
-    });
-});
+const userRegistrationReducer = createReducer(
+  new UserRegistration(),
+  (builder) => {
+    builder
+      .addCase(setUserRegistration, (state, action) => {
+        return action.payload;
+      })
+      .addDefaultCase((state) => {
+        return state;
+      });
+  }
+);
 
 // Dispatchers
 
@@ -80,22 +63,26 @@ export const dispatchSetIsLoading =
     dispatch(setIsLoading(isload));
   };
 
-export const dispatchSetUserName =
-  (value: string) => async (dispatch: AppDispatch) => {
-    dispatch(setUserName(value));
+export const dispatchSetUserRegistration =
+  (value: UserRegistration) => async (dispatch: AppDispatch) => {
+    dispatch(setUserRegistration(value));
   };
 
-export const dispatchSetPassword =
-  (value: string) => async (dispatch: AppDispatch) => {
-    dispatch(setPassword(value));
+export const dispatchSetLogin =
+  (value: Login) => async (dispatch: AppDispatch) => {
+    dispatch(setLogin(value));
+  };
+
+  export const dispatchSetLoginValidations =
+  (value: Map<string,string>) => async (dispatch: AppDispatch) => {
+    dispatch(setLoginValidations(value));
   };
 
 export const workJobReducer = combineReducers({
-  message: messageReducer,
   isLoading: isLoadingReducer,
   login: loginReducer,
-  userNameError:userNameErrorReducer,
-  passwordError:passwordErrorReducer
+  userRegistration: userRegistrationReducer,
+  loginValidations:loginValidationsReducer
 });
 
 export type workJobState = ReturnType<typeof workJobReducer>;

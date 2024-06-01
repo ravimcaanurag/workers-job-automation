@@ -11,21 +11,21 @@ import { ConnectedProps, connect } from "react-redux";
 import { createStructuredSelector } from "reselect";
 import "./WorkersJob.style.css";
 import {
-  dispatchSetPassword,
-  dispatchSetUserName,
+  dispatchSetLogin,
+  dispatchSetLoginValidations,
 } from "../redux/WorkersJob.redux";
 import { RootState } from "../redux/store";
-import logo from "./../assets/logoWorkers.png"
+import logo from "./../assets/logoWorkers.png";
+import { isEmpty, isValidateEmail } from "../Common/Utils";
 
 initializeIcons();
 
 const mapStateToProps = createStructuredSelector({
   login: (state: RootState) => state.workJobs.login,
-  userNameError:(state:RootState)=>state.workJobs.userNameError,
-  passwordError:(state:RootState)=>state.workJobs.passwordError,
+  loginValidations: (state: RootState) => state.workJobs.loginValidations,
 });
 
-const mapDispatchToProps = { dispatchSetUserName, dispatchSetPassword };
+const mapDispatchToProps = { dispatchSetLogin, dispatchSetLoginValidations };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type LoginProps = ConnectedProps<typeof connector>;
@@ -34,7 +34,7 @@ class LoginC extends React.PureComponent<LoginProps> {
   componentDidMount(): void {}
 
   render(): React.ReactNode {
-    const { login,userNameError,passwordError } = this.props;
+    const { login, loginValidations } = this.props;
 
     return (
       <Stack
@@ -56,7 +56,7 @@ class LoginC extends React.PureComponent<LoginProps> {
           }}
         >
           <Stack horizontalAlign="center" className="mb-4">
-            <img src={logo} alt="Logo" style={{ }} />
+            <img src={logo} alt="Logo" style={{}} />
           </Stack>
           <TextField
             label="User name"
@@ -64,8 +64,26 @@ class LoginC extends React.PureComponent<LoginProps> {
             placeholder="Enter email"
             styles={{ fieldGroup: { borderRadius: 4 } }}
             value={login.userName}
-            onChange={this._onUserNameChange}
-            errorMessage={userNameError}
+            onChange={(
+              _event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+              newValue?: string | undefined
+            ) =>
+              this.props.dispatchSetLogin({
+                ...login,
+                userName: newValue || "",
+              })
+            }
+            onBlur={() => {
+              let validationMessage = "";
+
+              if (!login.userName) {
+                validationMessage = "Enter User Name";
+              }             
+              this.props.dispatchSetLoginValidations(
+                loginValidations.set("UserName", validationMessage)
+              );
+            }}
+            errorMessage={this.getValidationMessage("UserName")}
           />
           <TextField
             label="Password"
@@ -73,13 +91,31 @@ class LoginC extends React.PureComponent<LoginProps> {
             placeholder="Password"
             styles={{ fieldGroup: { borderRadius: 4 } }}
             value={login.password}
-            onChange={this._onPasswordChange}
-            errorMessage={passwordError}
+            onChange={(
+              _event: FormEvent<HTMLInputElement | HTMLTextAreaElement>,
+              newValue?: string | undefined
+            ) =>
+              this.props.dispatchSetLogin({
+                ...login,
+                password: newValue || "",
+              })
+            }
+            onBlur={() => {
+              let passwordValidation = "";
+              if (!login.password || isEmpty(login.password)) {
+                passwordValidation = "Please enter Password";
+              }
+              this.props.dispatchSetLoginValidations(
+                loginValidations.set("Password", passwordValidation)
+              );
+            }}
+            errorMessage={this.getValidationMessage("Password")}
           />
           <PrimaryButton
             text="Login"
             styles={{ root: { width: "100%", borderRadius: 4, marginTop: 16 } }}
-            disabled={userNameError?.trim().length>0 || passwordError?.trim().length>0}
+            disabled={false}
+            onClick={this.handleLogin}
           />
           <Stack
             horizontal
@@ -107,16 +143,19 @@ class LoginC extends React.PureComponent<LoginProps> {
     );
   }
 
-  private _onUserNameChange = (
-    _event: FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string | undefined
-  ) => {
-    this.props.dispatchSetUserName(newValue as string);
+  private handleLogin = () => {
+    alert(JSON.stringify(this.props.login));
   };
 
-  private _onPasswordChange = (
-    _event: FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string | undefined
-  ) => {
-    this.props.dispatchSetPassword(newValue as string);
+  private getValidationMessage = (validationKey: string) => {
+    const { loginValidations } = this.props;
+    //alert(JSON.stringify(loginValidations))
+
+    if (loginValidations.has(validationKey)) {
+      return loginValidations.get(validationKey);
+    }
+
+    return "";
   };
 }
 
